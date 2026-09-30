@@ -27,7 +27,6 @@ let recursos = []; // caché local
 // Intenta cargar Firebase solo si hay configuración real
 async function iniciarFirebase() {
   if (configPendiente) {
-    // Modo demo: usa datos de ejemplo en memoria
     recursos = datosDemo();
     renderizar();
     return;
@@ -44,17 +43,25 @@ async function iniciarFirebase() {
     window.__fs = { collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, orderBy, query };
 
     const q = query(collection(db, "recursos"), orderBy("creado", "desc"));
-    onSnapshot(q, (snap) => {
-      recursos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderizar();
-    });
+    onSnapshot(q,
+      (snap) => {
+        recursos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderizar();
+      },
+      (error) => {
+        console.error("Error de Firestore:", error);
+        document.getElementById("contador").innerHTML =
+          `<span style="color:#B33;">⚠️ Error Firestore: ${error.message} (código: ${error.code})</span>`;
+      }
+    );
   } catch (err) {
     console.error("Error conectando a Firebase:", err);
+    document.getElementById("contador").innerHTML =
+      `<span style="color:#B33;">⚠️ Error: ${err.message}</span>`;
     recursos = datosDemo();
     renderizar();
   }
 }
-
 function datosDemo() {
   return [
     {
